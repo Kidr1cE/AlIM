@@ -14,13 +14,21 @@ type HandlerFunc func(ctx context.Context, conn net.Conn)
 
 type MailServer struct {
 	Address string
-	Handler HandlerFunc
+	Handler map[int]HandlerFunc
 }
 
 func NewMailServer(address string) *MailServer {
 	return &MailServer{
 		Address: address,
 	}
+}
+
+func InitSession(tcpServer *tcp.TcpServer) *session.Session {
+	newSession := session.NewSession(tcpServer)
+	newSession.Handle(session.GroupMessage, GroupHandler)
+	newSession.Handle(session.PrivateMessage, PrivateHandler)
+
+	return newSession
 }
 
 func (ms *MailServer) Start() {
@@ -39,7 +47,7 @@ func (ms *MailServer) Start() {
 		connectNum++
 
 		tcpServer := tcp.NewTcpServer(conn)
-		newSession := session.NewSession(tcpServer)
+		newSession := InitSession(tcpServer)
 
 		go func() {
 			newSession.Start()
