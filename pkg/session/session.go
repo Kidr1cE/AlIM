@@ -7,9 +7,10 @@ import (
 )
 
 type Session struct {
-	ID        string
-	TcpServer *tcp.TcpServer
-	mailBox   *mailbox.Mailbox
+	ID             string
+	TcpServer      *tcp.TcpServer
+	mailBox        *mailbox.Mailbox
+	privateMailBox *mailbox.Mailbox
 }
 
 func NewSession(tcpServer *tcp.TcpServer) *Session {
@@ -30,6 +31,7 @@ func (s *Session) Start() {
 
 	fmt.Println(connectMessage.String())
 	mailBoxID := connectMessage.MailBoxID
+	// group chat
 	s.mailBox = mailbox.GetMailbox(mailBoxID)
 	s.mailBox.AddClient(connectMessage.UserID, s.TcpServer)
 	s.mailBox.BroadcastMessage(tcp.Message{
@@ -39,6 +41,8 @@ func (s *Session) Start() {
 		UserName:  connectMessage.UserName,
 		Content:   []byte("User connected"),
 	})
+	// private chat
+	s.privateMailBox = mailbox.SetPrivateMailbox(connectMessage.UserID, s.TcpServer)
 
 	for {
 		message, err := s.TcpServer.Receive()
@@ -46,6 +50,17 @@ func (s *Session) Start() {
 			fmt.Println("Error receiving message:", err)
 			break
 		}
-		s.mailBox.BroadcastMessage(*message)
+		switch message.Type {
+		case tcp.GroupMessage:
+			s.mailBox.BroadcastMessage(*message)
+		case tcp.PrivateMessage:
+			friendMailBoxID := message.MailBoxID
+			friendMailBox := mailbox.GetPrivateMailbox(friendMailBoxID)
+			if friendMailBox == nil {
+				fmt.Println("Friend mailbox not found")
+				break
+			}
+			friendMailBox.BroadcastMessage(*message)
+		}
 	}
 }

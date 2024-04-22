@@ -9,9 +9,11 @@ import (
 
 func main() {
 	var userName string
-	var id, userID int
-	fmt.Scan(&userName, &id, &userID)
-	fmt.Println("Set user name:", userName, "ID:", id, "UserID:", userID)
+	var messageType int
+	var userID, mailboxID int
+	fmt.Println("Set Username, UserID, MailboxID, MessageType")
+	fmt.Scan(&userName, &userID, &mailboxID, &messageType)
+	fmt.Println("Set user name:", userName, "UserID:", userID, "MailboxID:", mailboxID, "MessageType:", messageType)
 
 	conn, err := net.Dial("tcp", "localhost:8080")
 	if err != nil {
@@ -39,9 +41,9 @@ func main() {
 		fmt.Scanln(&content)
 		message := &tcp.Message{
 			UserName:  userName,
-			MailBoxID: id,
+			MailBoxID: mailboxID,
 			UserID:    userID,
-			Type:      1,
+			Type:      messageType,
 			Content:   []byte(content),
 		}
 

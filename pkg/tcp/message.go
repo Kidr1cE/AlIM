@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+const (
+	GroupMessage = iota + 1
+	PrivateMessage
+)
+
 type Message struct {
 	MailBoxID int
 	Type      int
