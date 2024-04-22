@@ -31,16 +31,7 @@ func (s *Session) Start() {
 
 	fmt.Println(connectMessage.String())
 	mailBoxID := connectMessage.MailBoxID
-	// group chat
-	s.mailBox = mailbox.GetMailbox(mailBoxID)
-	s.mailBox.AddClient(connectMessage.UserID, s.TcpServer)
-	s.mailBox.BroadcastMessage(tcp.Message{
-		MailBoxID: mailBoxID,
-		Type:      1,
-		UserID:    connectMessage.UserID,
-		UserName:  connectMessage.UserName,
-		Content:   []byte("User connected"),
-	})
+
 	// private chat
 	s.privateMailBox = mailbox.SetPrivateMailbox(connectMessage.UserID, s.TcpServer)
 
@@ -52,6 +43,11 @@ func (s *Session) Start() {
 		}
 		switch message.Type {
 		case tcp.GroupMessage:
+			if s.mailBox == nil {
+				// group chat
+				s.mailBox = mailbox.GetMailbox(mailBoxID)
+				s.mailBox.AddClient(connectMessage.UserID, s.TcpServer)
+			}
 			s.mailBox.BroadcastMessage(*message)
 		case tcp.PrivateMessage:
 			friendMailBoxID := message.MailBoxID
