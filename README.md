@@ -18,8 +18,6 @@ Simple golang IM
         MailBox --> TcpServer
         Session --> MailBox
 
-        Server --> Store
-        MailBox --> Store
 ```
 ### Intro
 * 负责提供连接请求，每建立一个连接起一个goroutine初始化Session  
@@ -30,9 +28,12 @@ Simple golang IM
 ## 实现
 群聊与私聊均使用Mailbox进行
 1. 群聊：向所属群组进行广播
-    * 使用Mailbox，将用户添加进广播用户中，当发送消息时，直接使用Mailbox群组广播
+   * 使用Mailbox，将用户添加进广播用户中，当发送消息时，直接使用Mailbox群组广播
 2. 私聊：寻找接收方群组直接广播
-    * 为每个用户绑定个人Mailbox，个人Mailbox不允许其他用户添加进群组。
+   * 为每个用户绑定个人Mailbox，个人Mailbox不允许其他用户添加进群组。
+3. 用户已读、未读
+   * 只有PrivateRoom内有两个人的时候发送才认为已读
+
 ## 逻辑
 1. 建立连接：
    * 包类型：`ConnectMessage`  
@@ -52,3 +53,5 @@ Simple golang IM
     * 检查好友映射关系  
         - 有好友：直接查询`PrivateRooms`，有房间就说明对方添加过了，直接加入；没有就创建房间  
         - 没有好友：添加好友映射关系，并且新建房间  
+
+5. 好友推荐
