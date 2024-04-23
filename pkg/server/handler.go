@@ -113,8 +113,8 @@ func ListPublicRoomHandler(session *session.Session, message *tcp.Message) {
 	}
 }
 
-// FriendRecommendHandler :Send friend recommendations
-func FriendRecommendHandler(session *session.Session, message *tcp.Message) {
+// RecommendFriendHandler :Send friend recommendations
+func RecommendFriendHandler(session *session.Session, message *tcp.Message) {
 	ownFriends := store.GetFriends(message.UserID)
 
 	unaddedFriends := make(map[int]struct{})
@@ -124,5 +124,21 @@ func FriendRecommendHandler(session *session.Session, message *tcp.Message) {
 				unaddedFriends[friendID2] = struct{}{}
 			}
 		}
+	}
+
+	friendList := make([]int, 0, len(unaddedFriends))
+	for friendID := range unaddedFriends {
+		friendList = append(friendList, friendID)
+	}
+
+	recommandContent := fmt.Sprintf("Recommend friends: %v", friendList)
+	err := session.TcpServer.Send(&tcp.Message{
+		UserName: "AlIM Server",
+		RoomID:   message.RoomID,
+		UserID:   message.UserID,
+		Content:  []byte(recommandContent),
+	})
+	if err != nil {
+		fmt.Println("Error sending message:", err)
 	}
 }
