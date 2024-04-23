@@ -6,35 +6,56 @@ import (
 	"sync"
 )
 
-// Mailboxes ID is the group ID
-var Rooms = make(map[int]*Room)
+const (
+	PublicRoom = iota + 1
+	PrivateRoom
+)
 
-// PrivateMailboxes ID is the user ID
-var PrivateMailboxes = make(map[int]*Room)
+// PublicRooms ID is the group ID
+var PublicRooms = make(map[int]*Room)
+
+// PrivateRooms ID is the user ID
+var PrivateRooms = make(map[int]*Room)
 
 type Room struct {
+	ID      int
 	UserNum int
 	clients map[int]*tcp.TcpServer
 	mu      sync.RWMutex
 }
 
-func NewRoom() *Room {
+func NewRoom(roomID int) *Room {
 	return &Room{
+		ID:      roomID,
 		clients: make(map[int]*tcp.TcpServer),
 	}
 }
 
 func GetRoom(roomID int) *Room {
 	// TODO get from cache
-	if room, ok := Rooms[roomID]; ok {
+	if room, ok := PublicRooms[roomID]; ok {
 		fmt.Printf("Room %d exists\n", roomID)
 		return room
 	} else {
 		fmt.Printf("Room %d does not exist\n", roomID)
-		room := NewRoom()
-		Rooms[roomID] = room
+		room := NewRoom(roomID)
+		PublicRooms[roomID] = room
 		return room
 	}
+}
+
+func GetPrivateRoom(roomID int) *Room {
+	// TODO get from cache
+	if room, ok := PrivateRooms[roomID]; ok {
+		fmt.Printf("Room %d exists\n", roomID)
+		return room
+	} else {
+		fmt.Printf("Room %d does not exist\n", roomID)
+		room := NewRoom(roomID)
+		PrivateRooms[roomID] = room
+		return room
+	}
+
 }
 
 func (m *Room) AddClient(id int, conn *tcp.TcpServer) {

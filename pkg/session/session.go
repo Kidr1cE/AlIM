@@ -8,16 +8,9 @@ import (
 
 type MessageHandler func(session *Session, message *tcp.Message)
 
-const (
-	GroupMessage = iota + 1
-	PrivateMessage
-	ConnectMessage
-	AddFriendMessage
-	RoomChangeMessage
-)
-
 type Session struct {
-	ID        string
+	ID        int
+	Name      string
 	TcpServer *tcp.TcpServer
 	Room      *room.Room
 	handlers  map[int]MessageHandler
@@ -36,8 +29,8 @@ func (s *Session) Start() {
 			s.Room.BroadcastMessage(tcp.Message{
 				UserName: "AlIM Server",
 				UserID:   0,
-				Type:     GroupMessage,
-				Content:  []byte(fmt.Sprintf("%s has left the room", s.ID)),
+				Type:     0,
+				Content:  []byte(fmt.Sprintf("%s#%d has left the room", s.Name, s.ID)),
 			})
 			s.TcpServer.Close()
 		}

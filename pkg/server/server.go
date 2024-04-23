@@ -8,6 +8,15 @@ import (
 	"net"
 )
 
+const (
+	GroupMessage = iota + 1
+	PrivateMessage
+	ConnectMessage
+	AddFriendMessage
+	RoomChangeMessage
+	SendMessage
+)
+
 var connectNum int
 
 type HandlerFunc func(ctx context.Context, conn net.Conn)
@@ -25,11 +34,10 @@ func NewMailServer(address string) *MailServer {
 
 func InitSession(tcpServer *tcp.TcpServer) *session.Session {
 	newSession := session.NewSession(tcpServer)
-	newSession.Handle(session.GroupMessage, GroupHandler)
-	newSession.Handle(session.PrivateMessage, PrivateHandler)
-	newSession.Handle(session.ConnectMessage, ConnectHandler)
-	newSession.Handle(session.AddFriendMessage, AddFriendHandler)
-	newSession.Handle(session.RoomChangeMessage, RoomChangeHandler)
+	newSession.Handle(ConnectMessage, ConnectHandler)
+	newSession.Handle(AddFriendMessage, AddFriendHandler)
+	newSession.Handle(RoomChangeMessage, RoomChangeHandler)
+	newSession.Handle(SendMessage, SendMessageHandler)
 
 	return newSession
 }

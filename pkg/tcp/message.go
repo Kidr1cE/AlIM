@@ -12,13 +12,14 @@ const sep = "/*/"
 type Message struct {
 	UserID   int
 	RoomID   int
+	RoomType int
 	Type     int
 	UserName string // 25words max 100 bytes
 	Content  []byte // length
 }
 
 func (m *Message) String() string {
-	return fmt.Sprintf("RoomID: %d, Type: %d, UserID: %d, UserName: %s, Content: %s", m.RoomID, m.Type, m.UserID, m.UserName, m.Content)
+	return fmt.Sprintf("UserID: %d, RoomID: %d, RoomType: %d, Type: %d, UserName: %s, Content: %s", m.UserID, m.RoomID, m.RoomType, m.Type, m.UserName, m.Content)
 }
 
 func (m *Message) Marshal() ([]byte, error) {
@@ -32,6 +33,11 @@ func (m *Message) Marshal() ([]byte, error) {
 	// Write RoomID
 	if err := binary.Write(buf, binary.BigEndian, int32(m.RoomID)); err != nil {
 		return nil, fmt.Errorf("failed to write RoomID: %v", err)
+	}
+
+	// Write RoomType
+	if err := binary.Write(buf, binary.BigEndian, int32(m.RoomType)); err != nil {
+		return nil, fmt.Errorf("failed to write RoomType: %v", err)
 	}
 
 	// Write Type
@@ -70,6 +76,13 @@ func (m *Message) Unmarshal(data []byte) error {
 		return fmt.Errorf("failed to read RoomID: %v", err)
 	}
 	m.RoomID = int(roomID)
+
+	// Read RoomType
+	var roomType int32
+	if err := binary.Read(buf, binary.BigEndian, &roomType); err != nil {
+		return fmt.Errorf("failed to read RoomType: %v", err)
+	}
+	m.RoomType = int(roomType)
 
 	// Read Type
 	var msgType int32
