@@ -50,6 +50,8 @@ func userInit(tcpServer *tcp.TcpServer) {
 
 	fmt.Println("Set your RoomID, MessageType")
 	_, _ = fmt.Scan(&roomID, &messageType)
+
+	messageType = server.SendMessage
 }
 
 func sender(tcpServer *tcp.TcpServer) {
@@ -67,6 +69,8 @@ func sender(tcpServer *tcp.TcpServer) {
 			messageType = server.AddFriendMessage
 		case "/list":
 			messageType = server.ListPublicRoomMessage
+		case "/recommend":
+			messageType = server.RecommendFriendMessage
 		default:
 			content = input
 		}
