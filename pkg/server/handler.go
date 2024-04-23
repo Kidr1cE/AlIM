@@ -73,6 +73,14 @@ func RoomChangeHandler(session *session.Session, message *tcp.Message) {
 		}
 		privateRoomID := store.GenerateRoomID(session.ID, message.RoomID)
 		session.Room = room.GetPrivateRoom(privateRoomID)
+
+		// Get the history of the private room
+		for _, message := range session.Room.History[message.RoomID] {
+			err := session.TcpServer.Send(&message)
+			if err != nil {
+				fmt.Println("Error sending message:", err)
+			}
+		}
 	}
 	session.Room.AddClient(session.ID, session.TcpServer)
 }
@@ -89,13 +97,12 @@ func SendMessageHandler(session *session.Session, message *tcp.Message) {
 	session.Room.BroadcastMessage(*message)
 
 	// Check if the message is received from a private room
-	if message.RoomType == room.PrivateRoom {
-		privateRoomID := store.GenerateRoomID(session.ID, message.RoomID)
-		session.Room = room.GetPrivateRoom(privateRoomID)
+	if message.RoomType == room.PrivateRoom && session.Room.UserNum < 2 {
+		session.Room.History[message.UserID] = append(session.Room.History[message.UserID], *message)
 	}
 }
 
-// ListPublicRoomHandler
+// ListPublicRoomHandler : List all public rooms
 func ListPublicRoomHandler(session *session.Session, message *tcp.Message) {
 	fmt.Println("ListPublicRoomHandler", message.String())
 

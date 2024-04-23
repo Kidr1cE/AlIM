@@ -20,6 +20,7 @@ var PrivateRooms = make(map[int]*Room)
 type Room struct {
 	ID      int
 	UserNum int
+	History map[int][]tcp.Message
 	clients map[int]*tcp.TcpServer
 	mu      sync.RWMutex
 }
@@ -27,6 +28,7 @@ type Room struct {
 func NewRoom(roomID int) *Room {
 	return &Room{
 		ID:      roomID,
+		History: make(map[int][]tcp.Message),
 		clients: make(map[int]*tcp.TcpServer),
 	}
 }
