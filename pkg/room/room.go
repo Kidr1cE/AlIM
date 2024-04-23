@@ -18,47 +18,22 @@ type Room struct {
 	mu      sync.RWMutex
 }
 
-func NewMailbox() *Room {
+func NewRoom() *Room {
 	return &Room{
 		clients: make(map[int]*tcp.TcpServer),
 	}
 }
 
-func GetMailbox(roomID int) *Room {
+func GetRoom(roomID int) *Room {
 	// TODO get from cache
 	if room, ok := Rooms[roomID]; ok {
 		fmt.Printf("Room %d exists\n", roomID)
 		return room
 	} else {
 		fmt.Printf("Room %d does not exist\n", roomID)
-		room := NewMailbox()
+		room := NewRoom()
 		Rooms[roomID] = room
 		return room
-	}
-}
-
-func SetPrivateMailbox(userID int, conn *tcp.TcpServer) *Room {
-	// TODO get from cache
-	if room, ok := PrivateMailboxes[userID]; ok {
-		fmt.Printf("Private room %d exists\n", userID)
-		room.AddClient(userID, conn)
-	} else {
-		fmt.Printf("Private room %d does not exist\n", userID)
-		room := NewMailbox()
-		room.AddClient(userID, conn)
-		PrivateMailboxes[userID] = room
-	}
-	return PrivateMailboxes[userID]
-}
-
-func GetPrivateMailbox(userID int) *Room {
-	// TODO get from cache
-	if room, ok := PrivateMailboxes[userID]; ok {
-		fmt.Printf("Private room %d exists\n", userID)
-		return room
-	} else {
-		fmt.Printf("Private room %d does not exist\n", userID)
-		return nil
 	}
 }
 

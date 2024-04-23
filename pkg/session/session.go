@@ -11,6 +11,9 @@ type MessageHandler func(session *Session, message *tcp.Message)
 const (
 	GroupMessage = iota + 1
 	PrivateMessage
+	ConnectMessage
+	AddFriendMessage
+	RoomChangeMessage
 )
 
 type Session struct {
@@ -29,15 +32,16 @@ func NewSession(tcpServer *tcp.TcpServer) *Session {
 
 func (s *Session) Start() {
 	defer func() {
-		s.TcpServer.Close()
+		if s.Room != nil {
+			s.Room.BroadcastMessage(tcp.Message{
+				UserName: "AlIM Server",
+				UserID:   0,
+				Type:     GroupMessage,
+				Content:  []byte(fmt.Sprintf("%s has left the room", s.ID)),
+			})
+			s.TcpServer.Close()
+		}
 	}()
-
-	connectMessage, err := s.TcpServer.Receive()
-	if err != nil {
-		return
-	}
-
-	fmt.Println(connectMessage.String())
 
 	for {
 		message, err := s.TcpServer.Receive()

@@ -54,6 +54,7 @@ func (ts *TcpServer) Send(message *Message) error {
 		return err
 	}
 
+	// fmt.Println("Sent message:", message.String())
 	return nil
 }
 
@@ -85,7 +86,7 @@ func (ts *TcpServer) Receive() (*Message, error) {
 		return nil, err
 	}
 
-	fmt.Println("Received message:", message.String())
+	// fmt.Println("Received message:", message.String())
 	return message, nil
 }
 

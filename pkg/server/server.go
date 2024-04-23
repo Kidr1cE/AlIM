@@ -27,6 +27,9 @@ func InitSession(tcpServer *tcp.TcpServer) *session.Session {
 	newSession := session.NewSession(tcpServer)
 	newSession.Handle(session.GroupMessage, GroupHandler)
 	newSession.Handle(session.PrivateMessage, PrivateHandler)
+	newSession.Handle(session.ConnectMessage, ConnectHandler)
+	newSession.Handle(session.AddFriendMessage, AddFriendHandler)
+	newSession.Handle(session.RoomChangeMessage, RoomChangeHandler)
 
 	return newSession
 }
