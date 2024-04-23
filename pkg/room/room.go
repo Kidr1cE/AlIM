@@ -60,32 +60,46 @@ func GetPrivateRoom(roomID int) *Room {
 
 }
 
-func (m *Room) AddClient(id int, conn *tcp.TcpServer) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.UserNum++
+func (r *Room) AddClient(id int, conn *tcp.TcpServer) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.UserNum++
 
-	m.clients[id] = conn
+	r.clients[id] = conn
 }
 
-func (m *Room) RemoveClient(id int) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.UserNum--
+func (r *Room) RemoveClient(id int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.UserNum--
 
-	delete(m.clients, id)
+	delete(r.clients, id)
 }
 
-func (m *Room) BroadcastMessage(message tcp.Message) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+func (r *Room) BroadcastMessage(message tcp.Message) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	for _, conn := range m.clients {
+	for _, conn := range r.clients {
 		err := conn.Send(&message)
 		if err != nil {
 			fmt.Println("Error sending message:", err)
 			// TODO remove client
-			delete(m.clients, message.UserID)
+			delete(r.clients, message.UserID)
+		}
+	}
+}
+
+func (r *Room) SendToUser(userID int, message tcp.Message) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if conn, ok := r.clients[userID]; ok {
+		err := conn.Send(&message)
+		if err != nil {
+			fmt.Println("Error sending message:", err)
+			// TODO remove client
+			delete(r.clients, message.UserID)
 		}
 	}
 }

@@ -6,14 +6,24 @@ import (
 	"fmt"
 )
 
+const (
+	ConnectMessage         = 3
+	AddFriendMessage       = 4
+	RoomChangeMessage      = 5
+	SendMessage            = 6
+	ListPublicRoomMessage  = 7
+	RecommendFriendMessage = 8
+)
+
 // Message header: 32+100 132 bytes; body: length
 type Message struct {
 	UserID   int
 	RoomID   int
 	RoomType int
 	Type     int
-	UserName string // 25words max 100 bytes
-	Content  []byte // length
+	Gap      [4]byte // 4bytes gap
+	UserName string  // 25words max 100 bytes
+	Content  []byte  // length
 }
 
 func (m *Message) String() string {
@@ -41,6 +51,11 @@ func (m *Message) Marshal() ([]byte, error) {
 	// Write Type
 	if err := binary.Write(buf, binary.BigEndian, int32(m.Type)); err != nil {
 		return nil, fmt.Errorf("failed to write Type: %v", err)
+	}
+
+	// Write Gap
+	if err := binary.Write(buf, binary.BigEndian, m.Gap); err != nil {
+		return nil, fmt.Errorf("failed to write Gap: %v", err)
 	}
 
 	// Write UserName
@@ -88,6 +103,11 @@ func (m *Message) Unmarshal(data []byte) error {
 		return fmt.Errorf("failed to read Type: %v", err)
 	}
 	m.Type = int(msgType)
+
+	// Read Gap
+	if _, err := buf.Read(m.Gap[:]); err != nil {
+		return fmt.Errorf("failed to read Gap: %v", err)
+	}
 
 	// Read UserName
 	userNameBytes := make([]byte, 25) // Assuming UserName is always 25 bytes

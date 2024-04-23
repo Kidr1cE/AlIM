@@ -3,7 +3,9 @@ package session
 import (
 	"AlIM/pkg/room"
 	"AlIM/pkg/tcp"
+	"context"
 	"fmt"
+	"io"
 )
 
 type MessageHandler func(session *Session, message *tcp.Message)
@@ -17,13 +19,22 @@ type Session struct {
 }
 
 func NewSession(tcpServer *tcp.TcpServer) *Session {
-	return &Session{
+	session := &Session{
 		TcpServer: tcpServer,
 		handlers:  make(map[int]MessageHandler),
 	}
+
+	session.Handle(tcp.ConnectMessage, ConnectHandler)
+	session.Handle(tcp.AddFriendMessage, AddFriendHandler)
+	session.Handle(tcp.RoomChangeMessage, RoomChangeHandler)
+	session.Handle(tcp.SendMessage, SendMessageHandler)
+	session.Handle(tcp.ListPublicRoomMessage, ListPublicRoomHandler)
+	session.Handle(tcp.RecommendFriendMessage, RecommendFriendHandler)
+
+	return session
 }
 
-func (s *Session) Start() {
+func (s *Session) Start(ctx context.Context) {
 	defer func() {
 		if s.Room != nil {
 			s.Room.BroadcastMessage(tcp.Message{
@@ -37,18 +48,25 @@ func (s *Session) Start() {
 	}()
 
 	for {
-		message, err := s.TcpServer.Receive()
-		if err != nil {
-			fmt.Println("Error receiving message:", err)
-			break
-		}
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			message, err := s.TcpServer.Receive()
+			if err == io.EOF {
+				return
+			} else if err != nil {
+				fmt.Println("Error receiving message:", err)
+				continue
+			}
 
-		handler, ok := s.handlers[message.Type]
-		if !ok {
-			fmt.Println("Handler not found")
-			continue
+			handler, ok := s.handlers[message.Type]
+			if !ok {
+				fmt.Println("Handler not found")
+				continue
+			}
+			handler(s, message)
 		}
-		handler(s, message)
 	}
 }
 

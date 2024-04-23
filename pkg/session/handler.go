@@ -1,19 +1,31 @@
-package server
+package session
 
 import (
 	"AlIM/pkg/room"
-	"AlIM/pkg/session"
 	"AlIM/pkg/store"
 	"AlIM/pkg/tcp"
 	"fmt"
 )
 
 // ConnectHandler :Set session ID and Name
-func ConnectHandler(session *session.Session, message *tcp.Message) {
+func ConnectHandler(session *Session, message *tcp.Message) {
 	fmt.Println("ConnectHandler", message.String())
 
-	session.ID = message.UserID
+	// Check if the username is valid
+	if len(message.UserName) > 25 || len(message.UserName) < 1 {
+		err := session.TcpServer.Send(&tcp.Message{
+			UserName: "AlIM Server",
+			RoomID:   message.RoomID,
+			UserID:   session.ID,
+			Content:  []byte("Bad username!"),
+		})
+		if err != nil {
+			fmt.Println("Error sending message:", err)
+		}
+		return
+	}
 	session.Name = message.UserName
+	session.ID = store.GetNextUserID()
 
 	if room.GetRoom(message.RoomID) != nil {
 		session.Room = room.GetRoom(message.RoomID)
@@ -23,7 +35,7 @@ func ConnectHandler(session *session.Session, message *tcp.Message) {
 	err := session.TcpServer.Send(&tcp.Message{
 		UserName: "AlIM Server",
 		RoomID:   message.RoomID,
-		UserID:   message.UserID,
+		UserID:   session.ID,
 		Content:  []byte("Connected!"),
 	})
 	if err != nil {
@@ -31,7 +43,7 @@ func ConnectHandler(session *session.Session, message *tcp.Message) {
 	}
 }
 
-func AddFriendHandler(session *session.Session, message *tcp.Message) {
+func AddFriendHandler(session *Session, message *tcp.Message) {
 	fmt.Println("AddFriendHandler", message.String())
 
 	if !store.IsFriend(message.UserID, message.RoomID) { // If they are not friends, add them as friends
@@ -54,7 +66,7 @@ func AddFriendHandler(session *session.Session, message *tcp.Message) {
 }
 
 // RoomChangeHandler :Change the room of the session. Required Message.RoomID Message.RoomType
-func RoomChangeHandler(session *session.Session, message *tcp.Message) {
+func RoomChangeHandler(session *Session, message *tcp.Message) {
 	fmt.Println("RoomChangeHandler", message.String())
 
 	oldRoom := session.Room
@@ -86,7 +98,7 @@ func RoomChangeHandler(session *session.Session, message *tcp.Message) {
 }
 
 // SendMessageHandler :Change the room of the session. Required Content
-func SendMessageHandler(session *session.Session, message *tcp.Message) {
+func SendMessageHandler(session *Session, message *tcp.Message) {
 	fmt.Println("SendMessageHandler", message.String())
 
 	if session.Room == nil {
@@ -103,7 +115,7 @@ func SendMessageHandler(session *session.Session, message *tcp.Message) {
 }
 
 // ListPublicRoomHandler : List all public rooms
-func ListPublicRoomHandler(session *session.Session, message *tcp.Message) {
+func ListPublicRoomHandler(session *Session, message *tcp.Message) {
 	fmt.Println("ListPublicRoomHandler", message.String())
 
 	// Send the list of public rooms
@@ -121,7 +133,7 @@ func ListPublicRoomHandler(session *session.Session, message *tcp.Message) {
 }
 
 // RecommendFriendHandler :Send friend recommendations
-func RecommendFriendHandler(session *session.Session, message *tcp.Message) {
+func RecommendFriendHandler(session *Session, message *tcp.Message) {
 	ownFriends := store.GetFriends(message.UserID)
 
 	unaddedFriends := make(map[int]struct{})

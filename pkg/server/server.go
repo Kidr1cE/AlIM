@@ -8,17 +8,6 @@ import (
 	"net"
 )
 
-const (
-	GroupMessage = iota + 1
-	PrivateMessage
-	ConnectMessage
-	AddFriendMessage
-	RoomChangeMessage
-	SendMessage
-	ListPublicRoomMessage
-	RecommendFriendMessage
-)
-
 var connectNum int
 
 type HandlerFunc func(ctx context.Context, conn net.Conn)
@@ -34,24 +23,14 @@ func NewMailServer(address string) *MailServer {
 	}
 }
 
-func InitSession(tcpServer *tcp.TcpServer) *session.Session {
-	newSession := session.NewSession(tcpServer)
-	newSession.Handle(ConnectMessage, ConnectHandler)
-	newSession.Handle(AddFriendMessage, AddFriendHandler)
-	newSession.Handle(RoomChangeMessage, RoomChangeHandler)
-	newSession.Handle(SendMessage, SendMessageHandler)
-
-	newSession.Handle(ListPublicRoomMessage, ListPublicRoomHandler)
-	newSession.Handle(RecommendFriendMessage, RecommendFriendHandler)
-
-	return newSession
-}
-
 func (ms *MailServer) Start() {
 	conn, err := net.Listen("tcp", ms.Address)
 	if err != nil {
 		panic(err)
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	for {
 		conn, err := conn.Accept()
@@ -63,10 +42,10 @@ func (ms *MailServer) Start() {
 		connectNum++
 
 		tcpServer := tcp.NewTcpServer(conn)
-		newSession := InitSession(tcpServer)
+		newSession := session.NewSession(tcpServer)
 
 		go func() {
-			newSession.Start()
+			newSession.Start(ctx)
 		}()
 	}
 }

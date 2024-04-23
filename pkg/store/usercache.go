@@ -3,11 +3,17 @@ package store
 import (
 	"crypto/sha256"
 	"fmt"
+	"sync/atomic"
 )
 
 var (
 	friendShipCache = make(map[int][]int)
+	CurrentUserID   = new(int32)
 )
+
+func GetNextUserID() int {
+	return int(atomic.AddInt32(CurrentUserID, 1))
+}
 
 func IsFriend(userID1, userID2 int) bool {
 	// Check if userID2 is in the list of userID1's friends

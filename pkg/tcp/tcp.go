@@ -9,6 +9,10 @@ import (
 	"net"
 )
 
+// len content + content + content
+
+const lenContent = 4
+
 type HandlerFunc func(ctx context.Context, conn net.Conn)
 
 type TcpServer struct {
@@ -60,7 +64,7 @@ func (ts *TcpServer) Send(message *Message) error {
 
 func (ts *TcpServer) Receive() (*Message, error) {
 	// Create a buffer to hold the length
-	lenBuf := make([]byte, 4)
+	lenBuf := make([]byte, lenContent)
 	_, err := io.ReadFull(ts.tcpConnection, lenBuf)
 	if err != nil {
 		fmt.Println("Error reading length from server:", err)
