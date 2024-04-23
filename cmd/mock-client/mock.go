@@ -1,7 +1,6 @@
 package main
 
 import (
-	"AlIM/pkg/server"
 	"AlIM/pkg/tcp"
 	"fmt"
 	"net"
@@ -33,25 +32,30 @@ func main() {
 
 // Connect
 func userInit(tcpServer *tcp.TcpServer) {
-	fmt.Println("Init your user, set Username, UserID")
-	_, _ = fmt.Scan(&userName, &userID)
-	fmt.Println("Set user name:", userName, "UserID:", userID)
+	fmt.Println("Init your user, set Username")
+	_, _ = fmt.Scan(&userName)
 
 	err := Send(tcpServer, &tcp.Message{
 		UserName: userName,
 		RoomID:   roomID,
 		UserID:   userID,
-		Type:     server.ConnectMessage,
+		Type:     tcp.ConnectMessage,
 	})
 	if err != nil {
 		fmt.Println("Error sending message", err)
 		return
 	}
 
-	fmt.Println("Set your RoomID, MessageType")
-	_, _ = fmt.Scan(&roomID, &messageType)
+	initResp, err := Receive(tcpServer)
+	if err != nil {
+		fmt.Println("Error receiving message", err)
+		return
+	}
+	userID = initResp.UserID
 
-	messageType = server.SendMessage
+	fmt.Println("Connected to server, type /menu to see commands")
+
+	messageType = tcp.SendMessage
 }
 
 func sender(tcpServer *tcp.TcpServer) {
@@ -60,17 +64,26 @@ func sender(tcpServer *tcp.TcpServer) {
 		_, _ = fmt.Scanln(&input)
 		switch input {
 		case "/change": // Change room
-			fmt.Print("Set your RoomID, RoomType\nRoomType: 1 - Group, 2 - Private\n")
+			fmt.Print("Set your RoomID, RoomType \nRoomType:\t\n1 - Group,\t\n2 - Private\n")
 			_, _ = fmt.Scan(&roomID, &roomType)
-			messageType = server.RoomChangeMessage
+			fmt.Println("RoomID:", roomID, "RoomType:", roomType)
+			messageType = tcp.RoomChangeMessage
 		case "/add": // Add friend
-			fmt.Print("Set your RoomID\n")
+			fmt.Print("Set your Friend UserID\n")
 			_, _ = fmt.Scan(&roomID)
-			messageType = server.AddFriendMessage
+			messageType = tcp.AddFriendMessage
 		case "/list":
-			messageType = server.ListPublicRoomMessage
+			messageType = tcp.ListPublicRoomMessage
 		case "/recommend":
-			messageType = server.RecommendFriendMessage
+			messageType = tcp.RecommendFriendMessage
+		case "/menu":
+			fmt.Println("Commands:\n" +
+				"\t/change - Change room\n" +
+				"\t/add - Add friend\n" +
+				"\t/list - List public rooms\n" +
+				"\t/recommend - Recommend friend\n" +
+				"\t/menu - Show commands")
+			continue
 		default:
 			content = input
 		}
@@ -88,7 +101,7 @@ func sender(tcpServer *tcp.TcpServer) {
 			return
 		}
 
-		messageType = server.SendMessage
+		messageType = tcp.SendMessage
 	}
 }
 
