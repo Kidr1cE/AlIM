@@ -15,8 +15,8 @@ Simple golang IM
     flowchart TD
         Server --> Session
         Session --> TcpServer
-        MailBox --> TcpServer
-        Session --> MailBox
+        Room --> TcpServer
+        Session --> Room
 
 ```
 ### Intro
@@ -26,13 +26,14 @@ Simple golang IM
 * TcpServer：负责消息体的定义，上层只需要使用message发送、接收
 
 ## 实现
-群聊与私聊均使用Mailbox进行
+群聊与私聊均使用Room进行
 1. 群聊：向所属群组进行广播
-   * 使用Mailbox，将用户添加进广播用户中，当发送消息时，直接使用Mailbox群组广播
-2. 私聊：寻找接收方群组直接广播
-   * 为每个用户绑定个人Mailbox，个人Mailbox不允许其他用户添加进群组。
+   * 使用Room，将用户添加进广播用户中，当发送消息时，直接使用Mailbox群组广播
+2. 私聊：创建`PrivateRoom`
+   * 为每两个用户通过计算哈希绑定一个Room，该RoomID只能通过双方ID获得
 3. 用户已读、未读
    * 只有PrivateRoom内有两个人的时候发送才认为已读
+   * 未读信息：当PrivateRoom中只有一个人的时候，为对方Unread+1，并且添加列表存储Content
 
 ## 逻辑
 1. 建立连接：
@@ -55,3 +56,14 @@ Simple golang IM
         - 没有好友：添加好友映射关系，并且新建房间  
 
 5. 好友推荐
+   * 包类型：`RecommendFriendMessage` 必须字段
+   * 检查UserID所添加的好友，通过好友ID再次进行搜索，使用map去重，转换为列表
+
+## issue
+   * handler 注册 ✅ 将handler移动到session中
+   * session new 方式，已有判断，退出 ✅ 添加 EOF 判断后return, 添加ctx上下文终止
+   * 协议中 string name ✅ 建立连接时检查用户名长度
+   * iota ✅
+   * 1286608618 id ✅ 使用自增用户ID
+   * 协议预留、扩展 ✅ 预留了[4]bytes Gap字段方便解析
+   * 交互 不够友好。 像加好友 命令提示等 ✅ 添加`/menu`命令
