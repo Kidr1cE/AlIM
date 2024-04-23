@@ -1,7 +1,7 @@
 package main
 
 import (
-	"AlIM/pkg/session"
+	"AlIM/pkg/server"
 	"AlIM/pkg/tcp"
 	"fmt"
 	"net"
@@ -34,38 +34,44 @@ func main() {
 // Connect
 func userInit(tcpServer *tcp.TcpServer) {
 	fmt.Println("Init your user, set Username, UserID")
-	fmt.Scan(&userName, &userID)
+	_, _ = fmt.Scan(&userName, &userID)
 	fmt.Println("Set user name:", userName, "UserID:", userID)
 
-	Send(tcpServer, &tcp.Message{
+	err := Send(tcpServer, &tcp.Message{
 		UserName: userName,
 		RoomID:   roomID,
 		UserID:   userID,
-		Type:     session.ConnectMessage,
+		Type:     server.ConnectMessage,
 	})
+	if err != nil {
+		fmt.Println("Error sending message", err)
+		return
+	}
 
 	fmt.Println("Set your RoomID, MessageType")
-	fmt.Scan(&roomID, &messageType)
+	_, _ = fmt.Scan(&roomID, &messageType)
 }
 
 func sender(tcpServer *tcp.TcpServer) {
 	for {
 		var input, content string
-		fmt.Scanln(&input)
+		_, _ = fmt.Scanln(&input)
 		switch input {
 		case "/change": // Change room
 			fmt.Print("Set your RoomID, RoomType\nRoomType: 1 - Group, 2 - Private\n")
-			fmt.Scan(&roomID, &roomType)
-			messageType = session.RoomChangeMessage
+			_, _ = fmt.Scan(&roomID, &roomType)
+			messageType = server.RoomChangeMessage
 		case "/add": // Add friend
 			fmt.Print("Set your RoomID\n")
-			fmt.Scan(&roomID)
-			messageType = session.AddFriendMessage
+			_, _ = fmt.Scan(&roomID)
+			messageType = server.AddFriendMessage
+		case "/list":
+			messageType = server.ListPublicRoomMessage
 		default:
 			content = input
 		}
 
-		Send(tcpServer, &tcp.Message{
+		err := Send(tcpServer, &tcp.Message{
 			UserName: userName,
 			RoomID:   roomID,
 			RoomType: roomType,
@@ -73,8 +79,12 @@ func sender(tcpServer *tcp.TcpServer) {
 			Type:     messageType,
 			Content:  []byte(content),
 		})
+		if err != nil {
+			fmt.Println("Error sending message", err)
+			return
+		}
 
-		messageType = session.SendMessage
+		messageType = server.SendMessage
 	}
 }
 

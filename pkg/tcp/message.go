@@ -6,8 +6,6 @@ import (
 	"fmt"
 )
 
-const sep = "/*/"
-
 // Message header: 32+100 132 bytes; body: length
 type Message struct {
 	UserID   int
@@ -107,38 +105,3 @@ func (m *Message) Unmarshal(data []byte) error {
 
 	return nil
 }
-
-//func (m *Message) Marshal() ([]byte, error) {
-//	messageBytes := []byte(fmt.Sprintf("%d%s%d%s%d%s%s%s%s", m.RoomID, sep, m.Type, sep, m.UserID, sep, m.UserName, sep, m.Content))
-//	return messageBytes, nil
-//}
-//
-//func (m *Message) Unmarshal(content []byte) error {
-//	parts := strings.Split(string(content), sep)
-//	if len(parts) != 5 {
-//		return fmt.Errorf("error unmarshalling message")
-//	}
-//
-//	id, err := strconv.Atoi(parts[0])
-//	if err != nil {
-//		return err
-//	}
-//	m.RoomID = id
-//
-//	messageType, err := strconv.Atoi(parts[1])
-//	if err != nil {
-//		return err
-//	}
-//	m.Type = messageType
-//
-//	userID, err := strconv.Atoi(parts[2])
-//	if err != nil {
-//		return err
-//	}
-//	m.UserID = userID
-//
-//	m.UserName = parts[3]
-//	m.Content = []byte(parts[4])
-//
-//	return nil
-//}

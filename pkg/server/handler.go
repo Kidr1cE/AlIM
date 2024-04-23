@@ -85,5 +85,44 @@ func SendMessageHandler(session *session.Session, message *tcp.Message) {
 		fmt.Println("No room found for user")
 		return
 	}
+
 	session.Room.BroadcastMessage(*message)
+
+	// Check if the message is received from a private room
+	if message.RoomType == room.PrivateRoom {
+		privateRoomID := store.GenerateRoomID(session.ID, message.RoomID)
+		session.Room = room.GetPrivateRoom(privateRoomID)
+	}
+}
+
+// ListPublicRoomHandler
+func ListPublicRoomHandler(session *session.Session, message *tcp.Message) {
+	fmt.Println("ListPublicRoomHandler", message.String())
+
+	// Send the list of public rooms
+	for roomID := range room.PublicRooms {
+		err := session.TcpServer.Send(&tcp.Message{
+			UserName: "AlIM Server",
+			RoomID:   roomID,
+			UserID:   0,
+			Content:  []byte(fmt.Sprintf("Room %d", roomID)),
+		})
+		if err != nil {
+			fmt.Println("Error sending message:", err)
+		}
+	}
+}
+
+// FriendRecommendHandler :Send friend recommendations
+func FriendRecommendHandler(session *session.Session, message *tcp.Message) {
+	ownFriends := store.GetFriends(message.UserID)
+
+	unaddedFriends := make(map[int]struct{})
+	for _, friendID := range ownFriends {
+		for _, friendID2 := range store.GetFriends(friendID) {
+			if _, ok := unaddedFriends[friendID2]; !ok && friendID2 != message.UserID {
+				unaddedFriends[friendID2] = struct{}{}
+			}
+		}
+	}
 }

@@ -15,6 +15,8 @@ const (
 	AddFriendMessage
 	RoomChangeMessage
 	SendMessage
+	ListPublicRoomMessage
+	FriendRecommendMessage
 )
 
 var connectNum int
@@ -38,6 +40,9 @@ func InitSession(tcpServer *tcp.TcpServer) *session.Session {
 	newSession.Handle(AddFriendMessage, AddFriendHandler)
 	newSession.Handle(RoomChangeMessage, RoomChangeHandler)
 	newSession.Handle(SendMessage, SendMessageHandler)
+
+	newSession.Handle(ListPublicRoomMessage, ListPublicRoomHandler)
+	newSession.Handle(FriendRecommendMessage, FriendRecommendHandler)
 
 	return newSession
 }

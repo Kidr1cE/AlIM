@@ -21,6 +21,11 @@ func IsFriend(userID1, userID2 int) bool {
 	return false
 }
 
+func GetFriends(userID int) []int {
+	// Return the list of friends for the given userID
+	return friendShipCache[userID]
+}
+
 func AddFriend(userID1, userID2 int) {
 	// Add userID2 to the list of userID1's friends
 	friendShipCache[userID1] = append(friendShipCache[userID1], userID2)
