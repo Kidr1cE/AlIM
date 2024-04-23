@@ -3,6 +3,7 @@ Simple golang IM
 
 ## 初步需求
 * 私聊
+  * 添加好友
 * 群聊
 
 ## 结构
@@ -12,10 +13,13 @@ Simple golang IM
 
 ```mermaid
     flowchart TD
-        MailServer --> Session
+        Server --> Session
         Session --> TcpServer
         MailBox --> TcpServer
         Session --> MailBox
+
+        Server --> Store
+        MailBox --> Store
 ```
 ### Intro
 * 负责提供连接请求，每建立一个连接起一个goroutine初始化Session  
@@ -29,11 +33,22 @@ Simple golang IM
     * 使用Mailbox，将用户添加进广播用户中，当发送消息时，直接使用Mailbox群组广播
 2. 私聊：寻找接收方群组直接广播
     * 为每个用户绑定个人Mailbox，个人Mailbox不允许其他用户添加进群组。
+## 逻辑
+1. 建立连接：
+   * 包类型：`ConnectMessage`  
+   * 设置`Session` Name、ID
 
-建立连接：
-    获取第一个连接信息，初始化
-   
-添加好友：暂定
-    建立UserMap，当用户存在映射关系认为双方存在好友
-    好友请求向个人邮箱发送，发送后返回认为通过好友请求
-已读未读
+2. 变更房间：（初次连接房间时也使用
+    * 包类型：`RoomChangeMessage` 必须字段：RoomID、RoomType
+    * 查看 当前房间是否存在，存在则删除监听  
+    * 查看 连接房间是否存在
+
+3. 发送消息：
+    * 包类型：`SendMessage` 必须字段：Content
+    * 向当前房间进行广播
+
+4. 添加好友：
+    * 包类型：`AddFriendMessage` 必须字段：RoomID(好友的UserID)  
+    * 检查好友映射关系  
+        - 有好友：直接查询`PrivateRooms`，有房间就说明对方添加过了，直接加入；没有就创建房间  
+        - 没有好友：添加好友映射关系，并且新建房间  
