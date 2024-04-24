@@ -1,5 +1,5 @@
 # AlIM
-Simple golang IM
+A simple console-based IM system based on the TCP protocol without third-party dependencies
 
 ## 初步需求
 * 私聊
@@ -9,7 +9,7 @@ Simple golang IM
 ## 结构
 * 连接层：负责维护长连接，消息收发
 * 业务层：根据不同消息类型，连接不同Handler，适时消息推送/拉取
-* 存储层：缓存ToT，要加的话放进GetXXX逻辑中
+* 存储层：负责Cache、缓存等，可拓展
 
 ```mermaid
     flowchart TD
@@ -17,12 +17,11 @@ Simple golang IM
         Session --> TcpServer
         Room --> TcpServer
         Session --> Room
-
 ```
 ### Intro
 * 负责提供连接请求，每建立一个连接起一个goroutine初始化Session  
-* Session：Session创建后，客户端发送连接请求，初始化用户，并获取MailBox  
-* MailBox：广播信箱，所有订阅信箱的Session将会通过TcpServer向用户发送信息  
+* Session：Session创建后，客户端发送连接请求，初始化用户，再获取绑定等聊天室Room
+* Room：广播信箱，所有订阅信箱的Session将会通过TcpServer向用户发送信息  
 * TcpServer：负责消息体的定义，上层只需要使用message发送、接收
 
 ## 实现
@@ -60,7 +59,7 @@ Simple golang IM
    * 检查UserID所添加的好友，通过好友ID再次进行搜索，使用map去重，转换为列表
 
 ## issue
-   * handler 注册 ✅ 将handler移动到session中
+   * handler 注册 ✅ ~~将handler移动到session中~~ 使用单例模式，init注册Handler
    * session new 方式，已有判断，退出 ✅ 添加 EOF 判断后return, 添加ctx上下文终止
    * 协议中 string name ✅ 建立连接时检查用户名长度
    * iota ✅
